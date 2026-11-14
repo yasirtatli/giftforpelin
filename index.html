@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#11110f">
+  <title>Yasir ve Pelin'in hikâyesi</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Georgia, "Times New Roman", serif;
+      color: #f5eee4;
+      background: #11110f;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      --paper: #f5eee4;
+      --muted: #b6a99b;
+      --gold: #d3ad82;
+      --wine: #8c4c50;
+      --green: #587b60;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100svh;
+      background:
+        radial-gradient(ellipse at 50% 42%, rgba(116, 79, 60, 0.2), transparent 56%),
+        #11110f;
+    }
+
+    button {
+      min-height: 50px;
+      padding: 13px 22px;
+      border: 1px solid rgba(245, 238, 228, 0.2);
+      border-radius: 999px;
+      color: var(--paper);
+      background: rgba(255, 255, 255, 0.055);
+      font: 600 0.88rem/1 Arial, sans-serif;
+      letter-spacing: 0.025em;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+    }
+
+    button:hover {
+      border-color: rgba(245, 238, 228, 0.42);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--gold);
+      outline-offset: 4px;
+    }
+
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding:
+        max(20px, env(safe-area-inset-top))
+        max(20px, env(safe-area-inset-right))
+        max(20px, env(safe-area-inset-bottom))
+        max(20px, env(safe-area-inset-left));
+      opacity: 1;
+      transition: opacity 450ms ease, transform 650ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+
+    .screen[hidden] {
+      display: none;
+    }
+
+    .screen.is-leaving {
+      opacity: 0;
+      transform: translateY(14px) scale(0.985);
+      pointer-events: none;
+    }
+
+    .screen.is-entering .intro-card,
+    .screen.is-entering .memory-card,
+    .screen.is-entering .proposal-card,
+    .screen.is-entering .answer-card {
+      animation: arrive 850ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    }
+
+    @keyframes arrive {
+      from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.985);
+        filter: blur(7px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    .intro-card,
+    .proposal-card,
+    .answer-card {
+      width: min(100%, 720px);
+      text-align: center;
+    }
+
+    .intro-mark,
+    .heart-mark {
+      color: var(--gold);
+      font-family: Arial, sans-serif;
+      font-size: 1.05rem;
+    }
+
+    .intro-mark {
+      margin-bottom: 30px;
+      animation: heartbeat 2.4s ease-in-out infinite;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      12% { transform: scale(1.16); }
+      24% { transform: scale(1); }
+      36% { transform: scale(1.1); }
+    }
+
+    .eyebrow {
+      margin: 0 0 20px;
+      color: var(--gold);
+      font: 600 0.68rem/1.5 Arial, sans-serif;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+    }
+
+    .intro-card h1,
+    .proposal-card h1,
+    .answer-card h1 {
+      margin: 0 auto;
+      font-size: clamp(2.4rem, 9.5vw, 5rem);
+      font-weight: 400;
+      letter-spacing: -0.055em;
+      line-height: 1.08;
+      text-wrap: balance;
+    }
+
+    .intro-card blockquote {
+      max-width: 570px;
+      margin: 28px auto 36px;
+      color: #e4d7c8;
+      font-size: clamp(1.15rem, 4.5vw, 1.55rem);
+      font-style: italic;
+      line-height: 1.65;
+      text-wrap: balance;
+    }
+
+    .intro-card blockquote::before {
+      content: "“";
+      color: var(--gold);
+    }
+
+    .intro-card blockquote::after {
+      content: "”";
+      color: var(--gold);
+    }
+
+    .button-primary {
+      border-color: rgba(211, 173, 130, 0.52);
+      background: linear-gradient(135deg, #8b6950, #72513e);
+      box-shadow: 0 10px 34px rgba(112, 78, 53, 0.2);
+    }
+
+    .button-primary:hover {
+      border-color: var(--gold);
+      background: linear-gradient(135deg, #9b795e, #805e49);
+    }
+
+    .story-screen {
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: clamp(12px, 3vh, 26px);
+      align-items: stretch;
+    }
+
+    .story-top {
+      display: flex;
+      width: min(100%, 980px);
+      justify-self: center;
+      align-items: center;
+      gap: 14px;
+      font: 600 0.68rem/1 Arial, sans-serif;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .progress-track {
+      height: 2px;
+      flex: 1;
+      overflow: hidden;
+      background: rgba(245, 238, 228, 0.15);
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      background: var(--gold);
+      transition: width 550ms cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+
+    .memory-card {
+      display: grid;
+      width: min(100%, 980px);
+      min-height: 0;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      overflow: hidden;
+      height: 100%;
+      border: 1px solid rgba(245, 238, 228, 0.12);
+      border-radius: 22px;
+      background: rgba(28, 27, 24, 0.88);
+      box-shadow: 0 26px 90px rgba(0, 0, 0, 0.34);
+    }
+
+    .memory-card.is-changing .memory-copy {
+      animation: copy-arrive 650ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    }
+
+    @keyframes copy-arrive {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .photo-frame {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+      background: #29241f;
+    }
+
+    .photo-frame::after {
+      position: absolute;
+      inset: 45% 0 0;
+      background: linear-gradient(transparent, rgba(13, 13, 12, 0.28));
+      content: "";
+      pointer-events: none;
+    }
+
+    .memory-photo {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      object-fit: cover;
+      object-position: center;
+      animation: photo-arrive 1.1s ease both;
+    }
+
+    @keyframes photo-arrive {
+      from { transform: scale(1.055); filter: brightness(0.78); }
+      to { transform: scale(1); filter: brightness(1); }
+    }
+
+    .photo-frame.is-missing::before {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: var(--muted);
+      content: "Bu anının fotoğrafı yüklenemedi.";
+      font: 0.9rem/1.5 Arial, sans-serif;
+      text-align: center;
+    }
+
+    .memory-copy {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      justify-content: center;
+      padding: clamp(22px, 4vw, 48px);
+      text-align: left;
+    }
+
+    .memory-copy .eyebrow {
+      margin-bottom: 12px;
+      font-size: 0.63rem;
+      letter-spacing: 0.18em;
+    }
+
+    .memory-copy h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      font-weight: 400;
+      letter-spacing: -0.045em;
+      line-height: 1.1;
+      text-wrap: balance;
+    }
+
+    .memory-copy p {
+      margin: 18px 0 0;
+      color: #d0c4b8;
+      font-size: clamp(0.98rem, 1.5vw, 1.12rem);
+      line-height: 1.75;
+      text-wrap: pretty;
+    }
+
+    .memory-navigation {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .memory-navigation .button-primary {
+      flex-shrink: 0;
+    }
+
+    .memory-navigation button:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .button-quiet {
+      border-color: transparent;
+      color: #c6b8aa;
+      background: transparent;
+      padding-inline: 8px;
+    }
+
+    .button-quiet:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+
+    .button-quiet:disabled:hover {
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .proposal-card .heart-mark {
+      display: block;
+      margin: 25px 0 30px;
+      animation: heartbeat 2.4s ease-in-out infinite;
+    }
+
+    .proposal-card .eyebrow {
+      margin-bottom: 22px;
+    }
+
+    .proposal-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .yes-button {
+      min-width: 124px;
+      border-color: transparent;
+      background: var(--green);
+      box-shadow: 0 8px 26px rgba(57, 112, 69, 0.18);
+    }
+
+    .no-button {
+      min-width: 124px;
+      border-color: transparent;
+      background: var(--wine);
+      box-shadow: 0 8px 26px rgba(135, 63, 67, 0.16);
+    }
+
+    .answer-card .heart-mark {
+      display: block;
+      margin-bottom: 26px;
+      font-size: 1.5rem;
+      animation: heartbeat 1.5s ease-in-out infinite;
+    }
+
+    .answer-card h1 {
+      font-size: clamp(2.2rem, 9vw, 4.3rem);
+    }
+
+    @media (max-width: 700px) {
+      .story-screen {
+        gap: 12px;
+        padding:
+          max(12px, env(safe-area-inset-top))
+          max(14px, env(safe-area-inset-right))
+          max(12px, env(safe-area-inset-bottom))
+          max(14px, env(safe-area-inset-left));
+      }
+
+      .story-top {
+        font-size: 0.61rem;
+        letter-spacing: 0.09em;
+      }
+
+      .memory-card {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 1fr) auto;
+        border-radius: 18px;
+      }
+
+      .memory-copy {
+        padding: clamp(15px, 3.2vh, 26px) clamp(18px, 5vw, 30px);
+      }
+
+      .memory-copy .eyebrow {
+        margin-bottom: 8px;
+      }
+
+      .memory-copy h1 {
+        font-size: clamp(1.55rem, 6.7vw, 2.2rem);
+      }
+
+      .memory-copy p {
+        margin-top: 9px;
+        font-size: clamp(0.88rem, 3.65vw, 1rem);
+        line-height: 1.5;
+      }
+
+      .memory-navigation {
+        margin-top: 13px;
+      }
+
+      .memory-navigation button {
+        min-height: 44px;
+        padding-block: 10px;
+        font-size: 0.8rem;
+      }
+    }
+
+    @media (max-height: 650px) and (max-width: 700px) {
+      .story-screen {
+        gap: 8px;
+      }
+
+      .memory-copy {
+        padding-block: 12px;
+      }
+
+      .memory-copy p {
+        margin-top: 6px;
+        line-height: 1.38;
+      }
+
+      .memory-navigation {
+        margin-top: 8px;
+      }
+
+      .memory-navigation button {
+        min-height: 40px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="screen is-entering" id="introScreen" aria-labelledby="introTitle">
+      <div class="intro-card">
+        <div class="intro-mark" aria-hidden="true">✦</div>
+        <p class="eyebrow">Pelin'e, Yasir'den</p>
+        <h1 id="introTitle">Bizim hikâyemiz</h1>
+        <blockquote>
+          Bazı insanlar hayatımıza tesadüfen girer, sonra bütün güzel anıların en özel parçası olur. Pelin, seninle biriktirdiğimiz her anı yeniden yaşamak için güzel bir yolculuğa çıkalım.
+        </blockquote>
+        <button class="button-primary" id="beginButton" type="button">Anılarımıza başlayalım <span aria-hidden="true">→</span></button>
+      </div>
+    </section>
+
+    <section class="screen story-screen" id="storyScreen" aria-label="Birlikte yaşadığımız anılar" hidden>
+      <header class="story-top" aria-label="Anı ilerlemesi">
+        <span id="memoryCounter">01 / 12</span>
+        <div class="progress-track" aria-hidden="true">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <span>Bizim hikâyemiz</span>
+      </header>
+      <article class="memory-card" aria-live="polite">
+        <div class="photo-frame" id="photoFrame">
+          <img class="memory-photo" id="memoryPhoto" alt="">
+        </div>
+        <div class="memory-copy">
+          <p class="eyebrow" id="memoryDate"></p>
+          <h1 id="memoryTitle"></h1>
+          <p id="memoryCaption"></p>
+          <nav class="memory-navigation" aria-label="Anılar arasında gezinme">
+            <button class="button-quiet" id="backButton" type="button">← Önceki</button>
+            <button class="button-primary" id="nextButton" type="button">Devam et →</button>
+          </nav>
+        </div>
+      </article>
+    </section>
+
+    <section class="screen" id="proposalScreen" aria-labelledby="question" hidden>
+      <div class="proposal-card">
+        <p class="eyebrow">Sana küçük bir teklifim var</p>
+        <h1 id="question">Pelin, benimle Ayvalık'a gelir misin?</h1>
+        <span class="heart-mark" aria-hidden="true">♥</span>
+        <div class="proposal-buttons" id="proposalButtons">
+          <button class="yes-button" id="yesButton" type="button">Evet, gelirim</button>
+          <button class="no-button" id="noButton" type="button">Hayır</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="answerScreen" aria-labelledby="answerTitle" hidden>
+      <div class="answer-card">
+        <span class="heart-mark" aria-hidden="true">♥</span>
+        <p class="eyebrow">Ayvalık'ta, birlikte</p>
+        <h1 id="answerTitle">Biliyordum!<br>Ayvalık bizi bekliyor...</h1>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const memories = [
+      {
+        image: "beraber küçüklüğümüz.jpeg",
+        date: "Çocukluğumuzdan bir anı",
+        title: "Daha birbirimizi tanımadan önce",
+        caption: "Yıllar önce başlayan hayatlarımızın bir gün aynı hikâyede buluşacağını bilmiyorduk. Şimdi bu fotoğrafa bakınca, iyi ki yollarımız kesişmiş diyorum."
+      },
+      {
+        image: "ilk zamanlar gofrik latte.jpeg",
+        date: "İlk zamanlarımız · Gofrik Latte",
+        title: "Gofrik Latte'yi hatırlıyor musun?",
+        caption: "İlk zamanlarımızda birlikte içtiğimiz Gofrik Latte, bizim için sıradan bir kahveden çok daha fazlasıydı. O günün tadı ve seninle geçen sohbet hâlâ aklımda."
+      },
+      {
+        image: "bugünü hatırladın mı 2025 ten bir gün.jpeg",
+        date: "2025 · Balat",
+        title: "Balat'ta bir gün",
+        caption: "Balat'ın renkli sokaklarında birlikte geçirdiğimiz o gün, aradan zaman geçse de unutulmadı. Pelin, seninle yürüdüğümüz her sokak Yasir'in kalbinde güzel bir anı."
+      },
+      {
+        image: "4 mart 2026nevada çifti.jpeg",
+        date: "4 Mart 2026",
+        title: "Nevada Çifti olarak bir gün",
+        caption: "4 Mart 2026'daki bu güzel an, anılarımızın en özel duraklarından biri oldu. Sen yanımdayken her günün ayrı bir güzelliği var."
+      },
+      {
+        image: "22 ekim 2026 aylar sonra ilk buluşma.jpeg",
+        date: "22 Ekim 2026 · Aylar sonra ilk buluşma",
+        title: "Aylar sonra ilk buluşma",
+        caption: "Aylar sonra yeniden buluştuğumuz o ilk an, özlemenin ne kadar güzel bir kavuşmaya dönüştüğünü hatırlattı. Pelin, seni görmek her şeye değerdi."
+      },
+      {
+        image: "22 ekim 2026 eğlenceli bir anımız.jpeg",
+        date: "22 Ekim 2026 · Eğlenceli bir anımız",
+        title: "Eğlenceli bir anımız",
+        caption: "Birlikte güldüğümüz, eğlendiğimiz ve zamanı unuttuğumuz o güzel an. Yasir'in en sevdiği şeylerden biri, senin yüzündeki o gülümsemeyi görmek."
+      },
+      {
+        image: "22 ekim 2026 izmir ilk gün.jpeg",
+        date: "22 Ekim 2026 · İzmir",
+        title: "İzmir'de ilk gün",
+        caption: "İzmir'deki ilk günümüz, birlikte keşfedeceğimiz yeni anıların güzel bir başlangıcıydı. Sen yanımdayken her şehir daha güzel."
+      },
+      {
+        image: "22 ekim 2026 izmir tarihi asansr.jpeg",
+        date: "22 Ekim 2026 · İzmir Tarihi Asansör",
+        title: "İzmir Tarihi Asansör",
+        caption: "İzmir Tarihi Asansör'de şehri yukarıdan izlerken aklımdan geçen tek şey, bu manzarayı seninle paylaşmanın ne kadar güzel olduğuydu."
+      },
+      {
+        image: "23 ekim 2026 izmir bergama kaleye çıktık.jpeg",
+        date: "23 Ekim 2026 · Bergama",
+        title: "Bergama'ya uzanan yol",
+        caption: "Bergama'da çıktığımız o yolun her adımı, birlikte yaşadığımız güzel bir maceraya dönüştü. En güzel manzara yine yanımda sen vardın."
+      },
+      {
+        image: "23 ekim izmir bergamada lego yaptık yarım kalmıştı  .jpeg",
+        date: "23 Ekim 2026 · Bergama",
+        title: "Yarım kalan legomuz",
+        caption: "Birlikte yaptığımız ve yarım kalan o lego gibi, bizim hikâyemizin de daha yazılacak çok güzel bölümü var."
+      },
+      {
+        image: "24 ekim 2026 inciraltı yolculuğu.jpeg",
+        date: "24 Ekim 2026 · İnciraltı",
+        title: "İnciraltı yolculuğu",
+        caption: "İnciraltı'na yaptığımız yolculuk, daha yoldayken güzel bir anıya dönüştü. Yasir için önemli olan nereye gittiğimizden çok, kiminle gittiğimiz."
+      },
+      {
+        image: "24 ekim 2026 izmir konakta kebap yiyoruz.jpeg",
+        date: "24 Ekim 2026 · Konak",
+        title: "Konak'ta kebap",
+        caption: "Konak'ta birlikte yediğimiz kebap, İzmir günümüzün en lezzetli anılarından biri oldu. Yemekten daha güzel olan şey, o sofrayı seninle paylaşmaktı."
+      }
+    ];
+
+    const screens = {
+      intro: document.getElementById("introScreen"),
+      story: document.getElementById("storyScreen"),
+      proposal: document.getElementById("proposalScreen"),
+      answer: document.getElementById("answerScreen")
+    };
+    const photoFrame = document.getElementById("photoFrame");
+    const memoryPhoto = document.getElementById("memoryPhoto");
+    const memoryDate = document.getElementById("memoryDate");
+    const memoryTitle = document.getElementById("memoryTitle");
+    const memoryCaption = document.getElementById("memoryCaption");
+    const memoryCounter = document.getElementById("memoryCounter");
+    const progressFill = document.getElementById("progressFill");
+    const backButton = document.getElementById("backButton");
+    const nextButton = document.getElementById("nextButton");
+    let memoryIndex = 0;
+    let transitioning = false;
+
+    function showScreen(nextScreen, focusTarget) {
+      if (transitioning) return;
+      transitioning = true;
+
+      const currentScreen = Object.values(screens).find((screen) => !screen.hidden);
+      if (currentScreen === nextScreen) {
+        transitioning = false;
+        return;
+      }
+
+      if (nextScreen === screens.story) {
+        backButton.disabled = true;
+        nextButton.disabled = true;
+      }
+
+      if (!currentScreen) {
+        nextScreen.hidden = false;
+        nextScreen.classList.add("is-entering");
+        transitioning = false;
+        return;
+      }
+
+      currentScreen.classList.add("is-leaving");
+      window.setTimeout(() => {
+        currentScreen.hidden = true;
+        currentScreen.classList.remove("is-leaving");
+        nextScreen.hidden = false;
+        nextScreen.classList.add("is-entering");
+        if (focusTarget) focusTarget.focus({ preventScroll: true });
+
+        window.setTimeout(() => {
+          nextScreen.classList.remove("is-entering");
+          if (nextScreen === screens.story) {
+            backButton.disabled = memoryIndex === 0;
+            nextButton.disabled = false;
+          }
+          transitioning = false;
+        }, 850);
+      }, 420);
+    }
+
+    function renderMemory() {
+      const memory = memories[memoryIndex];
+      photoFrame.classList.remove("is-missing");
+      memoryPhoto.alt = `${memory.date}: ${memory.title}`;
+      memoryPhoto.src = new URL(memory.image, document.baseURI).href;
+      memoryPhoto.style.animation = "none";
+      void memoryPhoto.offsetWidth;
+      memoryPhoto.style.animation = "";
+      memoryDate.textContent = memory.date;
+      memoryTitle.textContent = memory.title;
+      memoryCaption.textContent = memory.caption;
+      memoryCounter.textContent = `${String(memoryIndex + 1).padStart(2, "0")} / ${String(memories.length).padStart(2, "0")}`;
+      progressFill.style.width = `${((memoryIndex + 1) / memories.length) * 100}%`;
+      backButton.disabled = memoryIndex === 0;
+      nextButton.textContent = memoryIndex === memories.length - 1 ? "Sana bir teklifim var →" : "Devam et →";
+    }
+
+    function startStory() {
+      memoryIndex = 0;
+      renderMemory();
+      showScreen(screens.story, nextButton);
+    }
+
+    function changeMemory(direction) {
+      if (transitioning) return;
+      const nextIndex = memoryIndex + direction;
+
+      if (nextIndex < 0) return;
+      if (nextIndex >= memories.length) {
+        showScreen(screens.proposal, document.getElementById("yesButton"));
+        return;
+      }
+
+      const card = document.querySelector(".memory-card");
+      card.classList.remove("is-changing");
+      void card.offsetWidth;
+      card.classList.add("is-changing");
+      memoryIndex = nextIndex;
+      renderMemory();
+    }
+
+    document.getElementById("beginButton").addEventListener("click", startStory);
+    backButton.addEventListener("click", () => changeMemory(-1));
+    nextButton.addEventListener("click", () => changeMemory(1));
+
+    memoryPhoto.addEventListener("error", () => {
+      photoFrame.classList.add("is-missing");
+    });
+
+    const noButton = document.getElementById("noButton");
+
+    function moveNoButton() {
+      if (noButton.parentElement !== document.body) {
+        document.body.appendChild(noButton);
+      }
+
+      const margin = 14;
+      const maxX = Math.max(margin, window.innerWidth - noButton.offsetWidth - margin);
+      const maxY = Math.max(margin, window.innerHeight - noButton.offsetHeight - margin);
+      const x = margin + Math.random() * Math.max(0, maxX - margin);
+      const y = margin + Math.random() * Math.max(0, maxY - margin);
+      noButton.style.position = "fixed";
+      noButton.style.left = `${x}px`;
+      noButton.style.top = `${y}px`;
+      noButton.style.zIndex = "3";
+    }
+
+    noButton.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      moveNoButton();
+    });
+
+    document.getElementById("noButton").addEventListener("click", (event) => {
+      event.preventDefault();
+      moveNoButton();
+    });
+
+    window.addEventListener("resize", () => {
+      if (noButton.parentElement === document.body && !noButton.hidden) {
+        moveNoButton();
+      }
+    });
+
+    document.getElementById("yesButton").addEventListener("click", () => {
+      noButton.hidden = true;
+      showScreen(screens.answer, document.getElementById("answerTitle"));
+
+      if (typeof confetti === "function") {
+        const duration = 6000;
+        const end = Date.now() + duration;
+
+        confetti({
+          particleCount: 220,
+          spread: 110,
+          startVelocity: 48,
+          origin: { y: 0.62 },
+          colors: ["#d3ad82", "#f5eee4", "#cf7180", "#8eaa78"]
+        });
+
+        (function celebrate() {
+          confetti({
+            particleCount: 7,
+            angle: 60,
+            spread: 70,
+            origin: { x: 0, y: 0.65 },
+            colors: ["#d3ad82", "#f5eee4", "#cf7180", "#8eaa78"]
+          });
+          confetti({
+            particleCount: 7,
+            angle: 120,
+            spread: 70,
+            origin: { x: 1, y: 0.65 },
+            colors: ["#d3ad82", "#f5eee4", "#cf7180", "#8eaa78"]
+          });
+
+          if (Date.now() < end) requestAnimationFrame(celebrate);
+        })();
+      }
+    });
+  </script>
+</body>
+</html>
